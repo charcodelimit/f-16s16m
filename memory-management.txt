@@ -1,0 +1,15 @@
+Memory Management
+=================
+
+#require buffer.frt
+#require dump.frt
+
+avr8/lib/forth2012
+#require core.frt
+#require core-ext.frt
+#require dot-res.frt
+.res
+
+\ dump free ressources
+
+

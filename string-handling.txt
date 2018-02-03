@@ -1,0 +1,123 @@
+The s" word
+===========
+
+"On the command line, strings are part of the current SOURCE buffer. 
+Their content is usually lost, when SOURCE gets REFILL'ed."
+
+Example:
+`> s" hi there" type`
+
+"In colon definitions, s" does something completely different: 
+It copies the whole string from the SOURCE buffer
+to flash (into the dictionary) and at runtime provides 
+the flash address and length of the string."
+
+#AMForth#
+
+squote.asm
+
+`; ( -- addr len) (C: <cchar> -- ) 
+ ; Compiler
+ ; compiles a string to flash, at runtime leaves ( -- flash-addr count) on stack`
+
+source.asm
+
+`; ( -- addr n ) 
+ ; System
+ ; address and current length of the input buffer`
+
+"Forth defines a few transient buffer regions for various purposes. The most important is PAD, the scratch buffer. It
+is located 100 bytes above the current HERE and goes to upper addresses. The Pictured Numeric Output is just at
+PAD and grows downward. The word WORD uses the area above HERE as it’s buffer to store the just recognized
+word from SOURCE."
+
+"SOURCE provides an addr/len string pair that does not change during processing. The task of REFILL is to fill
+the string buffer, SOURCE points to when finished.
+There is one default input source: The terminal input buffer. This buffer gets filled with REFILL-TIB that reads
+from the serial input buffers (KEY). SOURCE points to the Terminal Input Buffer itself. Another input source are
+plain strings, used by EVALUATE."
+
+"The TIB location and size are accessible with the VALUEs TIB and TIBSIZE."
+
+`; ( -- addr )
+ ; System Variable
+ ; variable holding the number of characters in TIB
+ .if cpu_msp430==1
+     VARIABLE(XT_NUMBERTIB,4,"#tib")
+         .DW RAM_NUMBERTIB
+ .endif`
+
+The upper address:
+
+`(ATmega328P)> #tib .
+390  ok`
+
+The lower address:
+`> tib .
+300  ok`
+
+=> 90 characters buffer 
+
+can also be found in ./appl/arduino/uno.map:
+`SET  TIBSIZE      0000005a`
+
+Now it is easy to define the missing word tibsize as follows:
+`: tibsize ( -- size )
+   #tib tib - ;`
+
+#Flashforth#
+
+ff-atmega.asm
+
+`; SOURCE   -- adr n         current input buffer
+ ;   'SOURCE 2@ ;        length is at higher adrs
+         fdw     USER_L
+ SOURCE_L:
+         .db     NFA|6,"source",0
+ SOURCE:
+         rcall   TICKSOURCE
+         jmp     TWOFETCH`
+
+`; TI#  -- n                      size of TIB
+ ; : ti# task @ 8 + @ ;
+         fdw     NUMBERQ_L
+ TIBSIZE_L:
+         .db     NFA|3,"ti#"
+
+ TIBSIZE:
+         rcall   TASK
+         rcall   FETCH_A
+         adiw    tosl, 8
+         jmp     FETCH`
+
+Source
+======
+
+Allocating the line buffer:
+
+`variable line 128 cells allot`
+
+alternative Forth 200x Syntax:
+`128 buffer: line`
+
+Freeing the line buffer:
+
+`line to here`
+
+`: .test ( addr len -- )
+   over over . .
+   type ;
+
+Length 1, ASCII character 32
+
+`> s"  " . c@
+1  ok
+> .
+32  ok`
+
+Determine ascii-code at runtime:
+`char a .`
+
+at compile time:
+[char]
+
