@@ -10,7 +10,7 @@ A small Forth library for the
 ## Install
 
 You need a running AmForth on your Arduino. After that you can upload 
-*dsp-16s16m.frt* using the *amforth-shell.py* script.
+`dsp-16s16m.frt` using the `amforth-shell.py` script.
 
 ## Usage
 
@@ -21,4 +21,4 @@ After that the display is ready to receive commands.
 
 ## License
 
-F-16s16m is licensed under the GPL Version 3.
+F-16s16m is licensed under the [GPL Version 3](https://www.gnu.org/licenses/gpl-3.0.en.html).
